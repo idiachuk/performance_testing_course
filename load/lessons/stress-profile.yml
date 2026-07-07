@@ -1,0 +1,23 @@
+# Lesson: Stress Test profile
+# Load well above the expected level (here ~3.5x the 100 req/s baseline and
+# beyond the service's ~250 req/s CPU ceiling). Expect: latency climbing
+# non-linearly, event-loop lag rising, then 503s as the service sheds load
+# past 100 concurrent requests.
+# No ensure block — the goal of a stress test is to FIND the breaking point,
+# not to pass/fail against an SLO.
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 1
+      rampTo: 50
+      name: Warm-Up
+    - duration: 300
+      arrivalRate: 350
+      name: Stress Test
+
+scenarios:
+  - name: Stressed request
+    flow:
+      - get:
+          url: "/api/hello"

@@ -1,0 +1,17 @@
+# Lesson: Constructing a POST Request
+# Sends a JSON body to the search endpoint. Run it twice and compare response
+# times: the first query is a cache miss (slow), repeats are hits (fast).
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+      name: POST request
+
+scenarios:
+  - name: Posting a search query
+    flow:
+      - post:
+          url: "/api/search"
+          json:
+            query: "wireless headphones"

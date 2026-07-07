@@ -1,0 +1,18 @@
+# Lesson: Breakpoint Test profile
+# One long, continuous ramp until the system breaks. Watch the Grafana latency
+# panel: it stays flat, then bends upward (the "knee", ~250 req/s for this
+# service), then 503s appear once the concurrency cap is hit. Note the req/s
+# at each of those moments — that is the deliverable of a breakpoint test.
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 600
+      arrivalRate: 1
+      rampTo: 500
+      name: Breakpoint ramp
+
+scenarios:
+  - name: Ramped request
+    flow:
+      - get:
+          url: "/api/hello"

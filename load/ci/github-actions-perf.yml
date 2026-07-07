@@ -1,0 +1,51 @@
+# Lesson: Running Artillery in CI/CD
+# Reference GitHub Actions workflow. To use it in your own repo, copy this
+# file to .github/workflows/perf.yml.
+#
+# The pass/fail gate is Artillery itself: when an `ensure` check fails,
+# `artillery run` exits with a non-zero code, the step fails, and the workflow
+# goes red. The same pattern works in GitLab CI, Jenkins, CircleCI, etc.
+name: Performance Test
+
+on: [push]
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Bring up the system under test inside the runner
+      - name: Start the lab service
+        run: docker compose up -d --build service
+
+      - name: Wait for the service to be healthy
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:3000/health && exit 0
+            sleep 1
+          done
+          echo "service did not become healthy" && exit 1
+
+      - name: Install Artillery
+        run: npm install -g artillery
+
+      # Secrets come from the repo's secret store as masked env vars —
+      # never write real credentials into workflow YAML.
+      - name: Run the load test
+        run: artillery run load/lessons/ensure-checks.yml --output report.json
+        env:
+          LAB_USER: ${{ secrets.LAB_USER }}
+          LAB_PASSWORD: ${{ secrets.LAB_PASSWORD }}
+
+      # Keep the raw results even when the test failed, so you can debug —
+      # download them from the workflow run page.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-report
+          path: report.json

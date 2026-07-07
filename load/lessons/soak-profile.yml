@@ -1,0 +1,17 @@
+# Lesson: Endurance (Soak) Test profile
+# Moderate, realistic load held for hours. The Artillery side is simple — the
+# real work is watching the server-side dashboard for slow drifts: memory that
+# only grows, p99 creeping up at constant concurrency, connection counts
+# rising. For practice, cut duration to 600 (10 minutes).
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 18000   # 5 hours; reduce for practice runs
+      arrivalRate: 30
+      name: Soak Test
+
+scenarios:
+  - name: Steady request
+    flow:
+      - get:
+          url: "/api/hello"

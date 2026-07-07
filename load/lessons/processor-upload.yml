@@ -1,0 +1,24 @@
+# Lesson: Processors — Custom JavaScript Code
+# Artillery has no built-in multipart file upload, so processor.js builds a
+# FormData body in the beforeRequest hook. The service replies with the number
+# of bytes it received — proof the upload arrived.
+#
+# One-time setup (from the load/ directory):  npm install
+config:
+  target: "http://localhost:3000"
+  processor: "./processor.js"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+      name: File Upload
+
+scenarios:
+  - name: Uploading a file
+    flow:
+      - post:
+          url: "/api/upload"
+          beforeRequest: "setupMultipartFormData"
+          capture:
+            - json: "$.receivedBytes"
+              as: "receivedBytes"
+      - log: "Server received {{ receivedBytes }} bytes"

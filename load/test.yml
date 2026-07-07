@@ -1,0 +1,46 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 15
+      arrivalRate: 1
+      rampTo: 10
+      name: Warm-up
+    # 2. Pre-spike baseline — hold normal load until metrics are steady
+    - duration: 15
+      arrivalRate: 10
+      name: Baseline pre-spike
+    # 3. The spike — jump ~10x almost instantly (a 10s ramp keeps it sharp)
+    - duration: 10
+      arrivalRate: 10
+      rampTo: 300
+      name: Spike ramp-up
+    # 4. Hold the spike briefly
+    - duration: 30
+      arrivalRate: 300
+      name: Spike sustain
+    # 5. Drop back to normal just as fast
+    - duration: 10
+      arrivalRate: 100
+      rampTo: 10
+      name: Spike ramp-down
+    # 6. Post-spike baseline — recovery window, longer than the pre-spike one
+    - duration: 60
+      arrivalRate: 10
+      name: Baseline post-spike
+  # Optional: fail the run if the service degrades. Adjust to taste.
+  plugins:
+    expect:
+      reportFailuresAsErrors: true
+      outputFormat: silent
+      expectDefault200: true
+    ensure:
+      thresholds:
+        - http.response_time.p95: 250
+      conditions:
+        - expression: "http.codes.200 > 0"
+
+scenarios:
+  - name: Hit hello endpoint
+    flow:
+      - get:
+          url: "/api/hello"

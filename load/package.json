@@ -1,0 +1,9 @@
+{
+  "name": "monitoring-lab-load-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Artillery test files for the monitoring lab. form-data is needed by the custom-processor (file upload) lesson.",
+  "dependencies": {
+    "form-data": "^4.0.0"
+  }
+}

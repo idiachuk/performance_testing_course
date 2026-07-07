@@ -1,0 +1,42 @@
+# Lesson: Spike Test profile
+# A sharp burst of ~30x baseline, then recovery. The most important phase is
+# the LAST one: after the surge passes, do error rate and p95 snap back to
+# baseline, or stay elevated? A system that never recovers fails the test even
+# if it survived the spike itself.
+config:
+  target: "http://localhost:3000"
+  phases:
+    # 1. Warm-up — ramp gently to baseline so the test's own cold start
+    #    isn't mistaken for a spike effect
+    - duration: 30
+      arrivalRate: 1
+      rampTo: 10
+      name: Warm-up
+    # 2. Pre-spike baseline — hold normal load until metrics are steady
+    - duration: 120
+      arrivalRate: 10
+      name: Baseline pre-spike
+    # 3. The spike — jump ~30x almost instantly (a 10s ramp keeps it sharp)
+    - duration: 10
+      arrivalRate: 10
+      rampTo: 300
+      name: Spike ramp-up
+    # 4. Hold the spike briefly
+    - duration: 60
+      arrivalRate: 300
+      name: Spike sustain
+    # 5. Drop back to normal just as fast
+    - duration: 10
+      arrivalRate: 300
+      rampTo: 10
+      name: Spike ramp-down
+    # 6. Post-spike baseline — recovery window, longer than the pre-spike one
+    - duration: 180
+      arrivalRate: 10
+      name: Baseline post-spike
+
+scenarios:
+  - name: Spiked request
+    flow:
+      - get:
+          url: "/api/hello"

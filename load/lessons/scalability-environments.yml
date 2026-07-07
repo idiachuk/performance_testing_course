@@ -1,0 +1,46 @@
+# Lesson: Scalability Test via environments
+# Each environment is one load step. The steps deliberately straddle the
+# service's ~250 req/s knee, so you can watch latency stay flat, then bend,
+# then break as the steps climb.
+#
+# Run one step:
+#   artillery run -e scalability_3 scalability-environments.yml
+#
+# Run all steps back to back, saving one report per step (macOS/Linux):
+#   for i in 1 2 3 4 5; do
+#     artillery run -e scalability_$i scalability-environments.yml --output phase$i.json
+#   done
+config:
+  target: "http://localhost:3000"
+  environments:
+    scalability_1:
+      phases:
+        - duration: 300
+          arrivalRate: 25
+          name: Scalability 1
+    scalability_2:
+      phases:
+        - duration: 300
+          arrivalRate: 75
+          name: Scalability 2
+    scalability_3:
+      phases:
+        - duration: 300
+          arrivalRate: 150
+          name: Scalability 3
+    scalability_4:
+      phases:
+        - duration: 300
+          arrivalRate: 225
+          name: Scalability 4
+    scalability_5:
+      phases:
+        - duration: 300
+          arrivalRate: 300
+          name: Scalability 5
+
+scenarios:
+  - name: Scaled request
+    flow:
+      - get:
+          url: "/api/hello"

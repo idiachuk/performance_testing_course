@@ -1,0 +1,30 @@
+# Lesson: Result Validation with ensure
+# `expect` asserts on individual responses during the run (fails the vuser);
+# `ensure` asserts on the aggregated metrics after the run (fails the test —
+# and the CI pipeline, via a non-zero exit code).
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: Validation practice
+  plugins:
+    expect:
+      reportFailuresAsErrors: true
+      outputFormat: silent
+    ensure:
+      thresholds:
+        # The lab service answers /api/hello in ~10-20 ms at this load, so
+        # 100 ms is a comfortable pass. Lower it to 10 to watch the test fail.
+        - http.response_time.p95: 100
+      conditions:
+        - expression: vusers.failed == 0
+        - expression: "http.request_rate >= 1 and http.response_time.max < 1000"
+
+scenarios:
+  - name: Validated request
+    flow:
+      - get:
+          url: "/api/hello"
+          expect:
+            statusCode: 200

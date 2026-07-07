@@ -1,0 +1,15 @@
+# Lesson: Your First Artillery Test
+# One virtual user executes the scenario once — the configuration to use while
+# you build and debug any test.
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+      name: Artillery First Test
+
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "/api/hello"

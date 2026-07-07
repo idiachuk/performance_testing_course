@@ -1,0 +1,29 @@
+# Lesson: Load Test profile
+# Normal expected load, sustained. The lab service saturates near ~250 req/s
+# (see service/src/index.ts), so a 100 req/s baseline is a healthy "expected
+# peak-hour load": latency should stay flat for the whole run.
+# Watch in Grafana: request rate steady, p95/p99 flat, zero errors.
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 1
+      rampTo: 20
+      name: Warm-Up
+    # 10 minutes is enough to see a stable picture in the lab; production
+    # load tests commonly run 30+ minutes.
+    - duration: 600
+      arrivalRate: 100
+      name: Load Test
+  plugins:
+    ensure:
+      thresholds:
+        - http.response_time.p95: 150
+      conditions:
+        - expression: "vusers.failed / vusers.created < 0.001"
+
+scenarios:
+  - name: Typical user request
+    flow:
+      - get:
+          url: "/api/hello"

@@ -1,0 +1,47 @@
+# One command brings up the whole lab: the service under test, Prometheus,
+# and Grafana.
+#
+#   docker compose up -d --build
+#
+# Then:
+#   Service under test:  http://localhost:3000  (try /api/hello)
+#   Prometheus:          http://localhost:9090  (Status -> Targets)
+#   Grafana:             http://localhost:3001  (dashboard is pre-provisioned)
+services:
+  service:
+    build: ./service
+    container_name: lab-service
+    ports:
+      - "3000:3000"
+    # Demo credentials for the auth lessons. Change them here (or run the
+    # service with your own env vars) — the course shows how to pass them to
+    # Artillery without hard-coding secrets in test files.
+    environment:
+      - LAB_USER=student
+      - LAB_PASSWORD=artillery
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: lab-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - service
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: lab-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus

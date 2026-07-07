@@ -1,0 +1,28 @@
+# Lesson: Reading HTTP Responses and Internal Variables
+# `capture` stores parts of the response in variables; `log` prints them.
+# Remember to remove/comment `log` lines before a real load run — they print
+# once per virtual user.
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+      name: Capture practice
+
+scenarios:
+  - name: Saving response details
+    flow:
+      - post:
+          url: "/api/search"
+          json:
+            query: "mechanical keyboard"
+          capture:
+            - json: "$.results[0]"
+              as: "first_result"
+            - json: "$.cached"
+              as: "was_cached"
+            - header: "content-type"
+              as: "headerValue"
+      - log: "First search result is: {{ first_result }}"
+      - log: "Served from cache: {{ was_cached }}"
+      - log: "Header content-type value is: {{ headerValue }}"

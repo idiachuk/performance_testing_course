@@ -1,0 +1,34 @@
+# Lesson: Environments — Multiple Phase Configurations in One File
+# `-e local` for single-user debugging, `-e load` and `-e spike` for the real
+# profiles. One file, three ways to run it:
+#   artillery run -e local multi-environments.yml
+config:
+  target: "http://localhost:3000"
+  environments:
+    local:
+      phases:
+        - duration: 1
+          arrivalRate: 1
+          name: Debugging with a single virtual user
+    load:
+      phases:
+        - duration: 600
+          arrivalRate: 100
+          name: Load test configuration
+    spike:
+      phases:
+        - duration: 120
+          arrivalRate: 10
+          name: Pre-spike baseline
+        - duration: 60
+          arrivalRate: 300
+          name: Spike
+        - duration: 180
+          arrivalRate: 10
+          name: Post-spike recovery
+
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "/api/hello"

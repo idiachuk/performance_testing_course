@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 2s
+  evaluation_interval: 2s
+
+scrape_configs:
+  - job_name: "load-test-service"
+    metrics_path: /metrics
+    static_configs:
+      # The service runs in the same Docker Compose network, so Prometheus
+      # reaches it by service name.
+      #
+      # If you prefer to run the service on your host (cd service && npm run
+      # dev) for faster code-edit cycles, change the target to
+      # "host.docker.internal:3000" — and on Linux also add
+      #   extra_hosts: ["host.docker.internal:host-gateway"]
+      # to the prometheus service in docker-compose.yml.
+      - targets: ["service:3000"]

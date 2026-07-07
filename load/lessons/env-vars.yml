@@ -1,0 +1,26 @@
+# Lesson: Do Not Commit Credentials — Environment Variables
+# The credentials come from environment variables via {{ $env.NAME }} instead
+# of being hard-coded in the file.
+#
+# macOS / Linux:
+#   LAB_USER=student LAB_PASSWORD=artillery artillery run env-vars.yml
+#
+# Windows (PowerShell):
+#   $env:LAB_USER="student"; $env:LAB_PASSWORD="artillery"; artillery run env-vars.yml
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+      name: Env vars practice
+
+scenarios:
+  - name: Login with env credentials
+    flow:
+      - post:
+          url: "/api/login"
+          json:
+            username: "{{ $env.LAB_USER }}"
+            password: "{{ $env.LAB_PASSWORD }}"
+          expect:
+            statusCode: 200

@@ -1,0 +1,39 @@
+# Lesson: Hooks — Actions Before and After Scenarios
+# The `before` flow runs ONCE per test run (not once per virtual user): it
+# logs in and captures a bearer token, which Artillery then copies into every
+# virtual user's context. The `after` flow runs once at the end and logs out.
+# Requests made in before/after do not count towards the test's metrics.
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+      name: Hooks practice
+
+before:
+  flow:
+    - post:
+        url: "/api/login"
+        json:
+          username: "student"
+          password: "artillery"
+        capture:
+          - json: "$.token"
+            as: "token"
+
+after:
+  flow:
+    - post:
+        url: "/api/logout"
+        headers:
+          Authorization: "Bearer {{ token }}"
+
+scenarios:
+  - name: Get user info
+    flow:
+      - get:
+          url: "/api/user"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            statusCode: 200

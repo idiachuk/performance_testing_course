@@ -1,0 +1,53 @@
+# Lesson: Scenarios — Realistic Flow Construction
+# think = pauses a real user takes; weight = traffic mix between user types;
+# loop = repeated actions; ifTrue = conditional steps based on captured data.
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 3
+      name: Realistic flows
+
+scenarios:
+  # 70% of traffic: browsing products
+  - name: Browse
+    weight: 70
+    flow:
+      - get:
+          url: "/api/products?limit=20"
+      - think: 5   # reading the product list
+      - loop:
+          - get:
+              url: "/api/products?limit=20"
+          - think: 2   # paging through results
+        count: 3
+
+  # 20% of traffic: searching
+  - name: Search
+    weight: 20
+    flow:
+      - post:
+          url: "/api/search"
+          json:
+            query: "wireless headphones"
+      - think: 3   # scanning search results
+
+  # 10% of traffic: logged-in user checks the account page
+  - name: Account
+    weight: 10
+    flow:
+      - post:
+          url: "/api/login"
+          json:
+            username: "student"
+            password: "artillery"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - think: 1
+      # Only proceed if login actually returned a token
+      - ifTrue: "token"
+        get:
+          url: "/api/user"
+          headers:
+            Authorization: "Bearer {{ token }}"

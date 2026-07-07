@@ -1,0 +1,3 @@
+This is the sample file uploaded by the custom-processor lesson.
+Replace it with any file (an image, a PDF) and re-run the test — the service
+will report how many bytes it received.

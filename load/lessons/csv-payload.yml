@@ -1,0 +1,39 @@
+# Lesson: Loading Test Data from a CSV File
+# Why varied data matters: the search endpoint caches results per query.
+# The "unique keywords" scenario reads a different keyword per virtual user
+# from keywords.csv (cache misses — slow); the "repeated keyword" scenario
+# always sends the same query (cache hits — fast). Watch the "Search cache"
+# panel in Grafana while this runs.
+#
+# Note: keywords.csv has 30 rows. Once all rows have been used, Artillery
+# recycles them from the top — so late "unique" queries start hitting the
+# cache too. Data exhaustion like this is a real load-testing pitfall: your
+# data set must be sized for the number of virtual users you create.
+config:
+  target: "http://localhost:3000"
+  payload:
+    - path: "keywords.csv"
+      fields:
+        - "keyword"
+        - "category"
+      order: sequence
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: CSV payload test
+
+scenarios:
+  - name: Unique keywords (cache misses)
+    weight: 50
+    flow:
+      - post:
+          url: "/api/search"
+          json:
+            query: "{{ keyword }} {{ category }}"
+  - name: Repeated keyword (cache hits)
+    weight: 50
+    flow:
+      - post:
+          url: "/api/search"
+          json:
+            query: "bestseller"

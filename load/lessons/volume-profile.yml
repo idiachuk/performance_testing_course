@@ -1,0 +1,23 @@
+# Lesson: Volume Test profile
+# The defining variable is data size per operation, not user count. Load stays
+# moderate; payload size is what changes. Compare the two scenarios in the
+# report (and the bandwidth/latency panels): same endpoint, very different
+# cost per request.
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 300
+      arrivalRate: 20
+      name: Volume Test
+
+scenarios:
+  - name: Small payload (20 products)
+    weight: 50
+    flow:
+      - get:
+          url: "/api/products?limit=20"
+  - name: Large payload (5000 products)
+    weight: 50
+    flow:
+      - get:
+          url: "/api/products?limit=5000"
