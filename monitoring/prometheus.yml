@@ -1,6 +1,12 @@
 global:
-  scrape_interval: 2s
-  evaluation_interval: 2s
+  # 5s (not 2s) on purpose: /metrics is served by the same single Node thread
+  # the load tests saturate. With a 2s interval the scrape timeout is also 2s,
+  # and during overload most scrapes time out — leaving gaps in the dashboard
+  # exactly when things get interesting. 5s lets more samples survive; some
+  # gaps under extreme load are expected (and are themselves a finding).
+  scrape_interval: 5s
+  scrape_timeout: 5s
+  evaluation_interval: 5s
 
 scrape_configs:
   - job_name: "load-test-service"

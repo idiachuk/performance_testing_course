@@ -609,30 +609,11 @@
                       "kind": "DataQuery",
                       "spec": {
                         "expr": "process_resident_memory_bytes",
-                        "legendFormat": "RSS bytes"
+                        "legendFormat": "RSS"
                       },
                       "version": "v0"
                     },
                     "refId": "A"
-                  }
-                },
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "hidden": false,
-                    "query": {
-                      "datasource": {
-                        "name": "prometheus"
-                      },
-                      "group": "prometheus",
-                      "kind": "DataQuery",
-                      "spec": {
-                        "expr": "rate(process_cpu_seconds_total[1m])",
-                        "legendFormat": "CPU cores"
-                      },
-                      "version": "v0"
-                    },
-                    "refId": "B"
                   }
                 }
               ],
@@ -643,7 +624,7 @@
           "description": "",
           "id": 5,
           "links": [],
-          "title": "Process memory & CPU",
+          "title": "Process memory (RSS)",
           "vizConfig": {
             "group": "timeseries",
             "kind": "VizConfig",
@@ -699,7 +680,8 @@
                         "value": 80
                       }
                     ]
-                  }
+                  },
+                  "unit": "bytes"
                 },
                 "overrides": []
               },
@@ -983,6 +965,126 @@
             "version": "13.1.0"
           }
         }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "prometheus"
+                      },
+                      "group": "prometheus",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "expr": "rate(process_cpu_seconds_total[30s]) * 100",
+                        "legendFormat": "CPU %"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "description": "Node.js is single-threaded: 100% means the one JS thread is saturated. Gaps in this line during heavy load mean Prometheus scrapes timed out because the service was too busy to answer /metrics - a finding in itself.",
+          "id": 8,
+          "links": [],
+          "title": "Process CPU (% of one core)",
+          "vizConfig": {
+            "group": "timeseries",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "percent",
+                  "max": 120
+                },
+                "overrides": []
+              },
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              }
+            },
+            "version": "13.1.0"
+          }
+        }
       }
     },
     "layout": {
@@ -1077,6 +1179,19 @@
               "height": 8,
               "width": 12,
               "x": 0,
+              "y": 16
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              },
+              "height": 8,
+              "width": 12,
+              "x": 12,
               "y": 16
             }
           }
