@@ -1104,7 +1104,7 @@
                       "group": "prometheus",
                       "kind": "DataQuery",
                       "spec": {
-                        "expr": "artillery_summaries{metric=~\"http_response_time_(p50|p95|p99)\"}",
+                        "expr": "artillery_summaries{metric=~\"http_response_time_(p50|p95|p99)\"} and on(job) (time() - push_time_seconds < 300)",
                         "legendFormat": "{{metric}}"
                       },
                       "version": "v0"
@@ -1117,7 +1117,7 @@
               "transformations": []
             }
           },
-          "description": "Pushed by the publish-metrics plugin via Pushgateway. Client-side view: includes queueing that the server-side latency panel cannot see. Flat lines after a test end are the last pushed values.",
+          "description": "Pushed by the publish-metrics plugin via Pushgateway. Client-side view: includes queueing that the server-side latency panel cannot see. Flat lines after a test end are the last pushed values. Shows only runs that pushed within the last 5 minutes; older runs age out of the panel automatically.",
           "id": 9,
           "links": [],
           "title": "Artillery (client): response time percentiles",
@@ -1223,7 +1223,7 @@
                       "group": "prometheus",
                       "kind": "DataQuery",
                       "spec": {
-                        "expr": "artillery_rates{metric=\"http_request_rate\"}",
+                        "expr": "artillery_rates{metric=\"http_request_rate\"} and on(job) (time() - push_time_seconds < 300)",
                         "legendFormat": "req/s"
                       },
                       "version": "v0"
@@ -1242,7 +1242,7 @@
                       "group": "prometheus",
                       "kind": "DataQuery",
                       "spec": {
-                        "expr": "artillery_counters{metric=~\"http_codes_.*\"}",
+                        "expr": "artillery_counters{metric=~\"http_codes_.*\"} and on(job) (time() - push_time_seconds < 300)",
                         "legendFormat": "{{metric}} (cumulative)"
                       },
                       "version": "v0"
@@ -1255,7 +1255,7 @@
               "transformations": []
             }
           },
-          "description": "Client-side request rate (per second) and cumulative response-code counters for the current test run.",
+          "description": "Client-side request rate (per second) and cumulative response-code counters for the current test run. Shows only runs that pushed within the last 5 minutes; older runs age out of the panel automatically.",
           "id": 10,
           "links": [],
           "title": "Artillery (client): request rate & response codes",
