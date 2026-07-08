@@ -20,6 +20,14 @@ services:
       - LAB_USER=student
       - LAB_PASSWORD=artillery
 
+  # Receives Artillery's client-side metrics from the publish-metrics plugin
+  # (Artillery pushes; Prometheus scrapes the gateway). Used by load/test.yml.
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: lab-pushgateway
+    ports:
+      - "9091:9091"
+
   prometheus:
     image: prom/prometheus:latest
     container_name: lab-prometheus

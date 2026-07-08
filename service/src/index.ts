@@ -6,7 +6,7 @@ import {
   Histogram,
   Registry,
 } from "prom-client";
-import { performance } from "node:perf_hooks";
+import { monitorEventLoopDelay, performance } from "node:perf_hooks";
 import { randomUUID } from "node:crypto";
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -97,6 +97,31 @@ const BASE_LATENCY_JITTER_MS = 7; // random extra, so the graph isn't a flat lin
 const CPU_BURN_MS = 4; // synchronous CPU cost per request -> ~250 req/s ceiling
 const MAX_CONCURRENT = 100; // shed with 503 beyond this many in-flight requests
 
+//   4. LAG_SHED_MS — lag-aware load shedding. The MAX_CONCURRENT check alone
+//      is not enough: under CPU saturation the queue forms in the event loop
+//      *before* requests ever reach a handler, where an in-flight counter
+//      cannot see it. Requests then wait many seconds and die as client-side
+//      socket timeouts instead of clean 503s. So we also watch the event-loop
+//      delay itself: when it exceeds this threshold, every request (except
+//      /metrics and /health) is rejected immediately with a cheap 503. Cheap
+//      rejections let the loop drain, latency stays bounded, and the failure
+//      mode under overload becomes "fast 503" instead of "10-second timeout" —
+//      graceful degradation you can see on the dashboard. Because the trigger
+//      is the lag itself, this adapts automatically to however much CPU the
+//      Docker VM on a student's machine actually provides.
+const LAG_SHED_MS = 100;
+
+// Rolling event-loop delay measurement feeding the lag shedder. The histogram
+// is sampled and reset twice a second; under heavy load the sampling timer
+// itself is delayed, which only makes the measured lag more honest.
+const loopDelay = monitorEventLoopDelay({ resolution: 20 });
+loopDelay.enable();
+let currentLagMs = 0;
+setInterval(() => {
+  currentLagMs = loopDelay.mean / 1e6;
+  loopDelay.reset();
+}, 500).unref();
+
 // A cache miss on /api/search costs noticeably more CPU than /api/hello, so
 // the difference between hitting and missing the cache is obvious on the
 // latency and cache panels.
@@ -135,6 +160,21 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     endTimer(labels);
     httpTotal.inc(labels);
   });
+  next();
+});
+
+// Lag-aware load shedding (see the load-sensitivity model above). Skips
+// /metrics and /health so monitoring keeps working while the app drowns —
+// in production this is why exporters run as sidecars.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.path === "/metrics" || req.path === "/health") return next();
+  if (currentLagMs > LAG_SHED_MS) {
+    res
+      .status(503)
+      .set("Retry-After", "1")
+      .json({ error: "service overloaded (event loop lagging), try again" });
+    return;
+  }
   next();
 });
 

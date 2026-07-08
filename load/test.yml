@@ -27,17 +27,24 @@ config:
     - duration: 60
       arrivalRate: 10
       name: Baseline post-spike
-  # Optional: fail the run if the service degrades. Adjust to taste.
   plugins:
-    expect:
-      reportFailuresAsErrors: true
-      outputFormat: silent
-      expectDefault200: true
+    # No expect plugin here on purpose: in a spike test, 503s during the surge
+    # are an expected observation, not a per-request failure. Asserting 200 on
+    # every response would mark the shedding we WANT to study as test failures.
     ensure:
       thresholds:
-        - http.response_time.p95: 250
+        # Generous on purpose — it tolerates the spike itself but fails the
+        # run if latency never recovers. Tighten to see the gate trip.
+        - http.response_time.p95: 1000
       conditions:
         - expression: "http.codes.200 > 0"
+    # Push Artillery's client-side metrics to Prometheus (via the Pushgateway
+    # container) so load and server metrics share one Grafana timeline.
+    publish-metrics:
+      - type: prometheus
+        pushgateway: "http://localhost:9091"
+        tags:
+          - "testId:spike-showcase"
 
 scenarios:
   - name: Hit hello endpoint

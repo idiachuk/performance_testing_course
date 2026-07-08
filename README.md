@@ -43,6 +43,7 @@ Verify everything is up:
 | Service under test | http://localhost:3000 | `curl http://localhost:3000/api/hello` |
 | Prometheus | http://localhost:9090 | Status → Targets: `load-test-service` is **UP** |
 | Grafana | http://localhost:3001 | Open the **Load test service** dashboard |
+| Pushgateway | http://localhost:9091 | Receives Artillery's own metrics (used by `load/test.yml`) |
 
 Grafana allows anonymous admin access — no login needed.
 
@@ -87,8 +88,10 @@ The app models three real-world behaviors, tuned in `service/src/index.ts`:
 2. **CPU burn per request** (4 ms, synchronous) — Node's single thread
    saturates near **~250 req/s**; past that, latency and event-loop lag climb
    non-linearly. This is the "knee" you'll find in the breakpoint lesson.
-3. **Load shedding** — beyond 100 concurrent requests it returns **503**
-   instead of queueing forever.
+3. **Load shedding** — beyond 100 concurrent requests, or whenever the
+   event loop lags more than 100 ms, it returns a fast **503** instead of
+   queueing forever. This is why an overloaded run fails with clean 503s
+   rather than client-side socket timeouts.
 
 Search (`/api/search`) adds a fourth: an **in-memory cache**. Cache misses
 burn ~25 ms of CPU; hits are nearly free. The CSV-payload lesson makes this

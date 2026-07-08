@@ -21,3 +21,10 @@ scrape_configs:
       #   extra_hosts: ["host.docker.internal:host-gateway"]
       # to the prometheus service in docker-compose.yml.
       - targets: ["service:3000"]
+
+  # Artillery's client-side metrics, pushed by the publish-metrics plugin to
+  # the Pushgateway. honor_labels keeps the labels Artillery set on push.
+  - job_name: "artillery"
+    honor_labels: true
+    static_configs:
+      - targets: ["pushgateway:9091"]
