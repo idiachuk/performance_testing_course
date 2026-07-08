@@ -40,6 +40,13 @@ services:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    # Admin API enabled so stored test-run history can be deleted, e.g.:
+    #   curl -X POST 'http://localhost:9090/api/v1/admin/tsdb/delete_series?match[]={__name__=~"artillery_.*"}'
+    # (default flags must be repeated when overriding the command)
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-admin-api
     depends_on:
       - service
 
