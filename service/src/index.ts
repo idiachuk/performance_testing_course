@@ -69,6 +69,17 @@ const searchCacheMisses = new Counter({
   registers: [register],
 });
 
+// Every 503 the service sheds, labeled by what triggered it: "lag" (event
+// loop falling behind — the front-door check) or "capacity" (too many
+// requests inside the handler). Makes the shedding story directly readable
+// on the dashboard instead of inferred from the error-rate panel.
+const shedTotal = new Counter({
+  name: "lab_shed_total",
+  help: "Requests rejected with 503 by load shedding, by trigger",
+  labelNames: ["reason"] as const,
+  registers: [register],
+});
+
 // --- Load-sensitivity model ----------------------------------------------
 // The previous handler awaited a setTimeout, which is non-blocking: Node can
 // hold tens of thousands of pending timers with no contention, so latency
@@ -169,6 +180,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.path === "/metrics" || req.path === "/health") return next();
   if (currentLagMs > LAG_SHED_MS) {
+    shedTotal.inc({ reason: "lag" });
     res
       .status(503)
       .set("Retry-After", "1")
@@ -309,6 +321,7 @@ app.get("/api/hello", async (_req: Request, res: Response) => {
   //    ceiling, reject fast with 503 rather than queueing without bound. This
   //    is what makes the error-rate panel light up at the spike peak.
   if (currentInFlight >= MAX_CONCURRENT) {
+    shedTotal.inc({ reason: "capacity" });
     res
       .status(503)
       .set("Retry-After", "1")
