@@ -1,0 +1,28 @@
+# Lesson: AI Agents — Practice Task "Find the Knee" (step 1, deliberately under-loaded)
+# Five 60-second steps at low arrival rates. Run every step, save one report per step,
+# then hand the reports to your AI assistant with the Scenario 4 analysis prompt and ask
+# it to (a) say whether a knee is visible and (b) propose corrected arrival rates.
+# Review the proposed environments block, smoke-run it, then run the real sweep.
+#
+#   for i in 1 2 3 4 5; do
+#     artillery run -e step_$i find-knee.yml --output knee$i.json
+#   done
+config:
+  target: "http://localhost:3000"
+  environments:
+    step_1:
+      phases: [{ duration: 60, arrivalRate: 5,  name: Step 1 }]
+    step_2:
+      phases: [{ duration: 60, arrivalRate: 10, name: Step 2 }]
+    step_3:
+      phases: [{ duration: 60, arrivalRate: 15, name: Step 3 }]
+    step_4:
+      phases: [{ duration: 60, arrivalRate: 20, name: Step 4 }]
+    step_5:
+      phases: [{ duration: 60, arrivalRate: 25, name: Step 5 }]
+
+scenarios:
+  - name: Knee probe
+    flow:
+      - get:
+          url: "/api/hello"
